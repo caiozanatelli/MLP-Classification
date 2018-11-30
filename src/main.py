@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 from time import time
 from os import getcwd
-#from nn import NeuralNet
+from neuralnet import NeuralNetwork
 from os.path import join
 from os.path import split
 from keras.utils import np_utils
