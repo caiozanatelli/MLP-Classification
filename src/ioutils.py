@@ -38,7 +38,7 @@ class IOUtils(object):
             matrix[:, [column, -1]] = matrix[:, [-1, column]]
         return matrix
     
-    def save_data(self, data):
+    def write_data(self, data):
         '''
         Save a string data to the log file
 

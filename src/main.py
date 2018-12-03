@@ -7,6 +7,7 @@ from os.path import join
 from os.path import split
 from keras.utils import np_utils
 from ioutils import IOUtils
+from utils import Utils
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Galaxy Classifier using Neural Networks')
@@ -35,8 +36,11 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
+
 def main(args):
     ioutils = IOUtils()
+    utils   = Utils()
     classes_dict = {'GALAXY':0, 'STAR':1, 'QSO':2}
     matrix   = ioutils.read_input(args.input)
     classes  = matrix[1:, -1]
@@ -45,6 +49,36 @@ def main(args):
     examples, attributes = X.shape
 
     #TODO: One-Hot encoding
+    Y = utils.to_categorical(utils.to_numerical(classes, classes_dict))
+    neural_net = NeuralNetwork(args.hidden, args.neurons, nclasses, attributes,
+                                args.activation, args.epoch, args.batch,
+                                args.learning_rate, args.decay, args.seed)
+    # Split dataset into train and validation data
+    X_indexes = np.arange(examples)
+    train_epochs = []
+    valid_epochs = []
+    times = []
+
+    # Perfomr 3-Fold Cross Validation
+    for train, valid in utils.kfold_cross_validation(X_indexes, 3, True):
+        neural_net.build_model()
+        t_start = time()
+        train_err, valid_err = neural_net.fit_model(X, Y, train, valid)
+        t_end = time()
+        times.append(t_end - t_start)
+        train_epochs.append(train_err)
+        valid_epochs.append(valid_err)
+
+    mean_time = np.mean(np.array(times), axis=0)
+    mean_folds_train = np.mean(np.dstack((train_epochs[0], train_epochs[1], train_epochs[2])), axis=2)
+    mean_folds_test  = np.mean(np.dstack((valid_epochs[0], valid_epochs[1], valid_epochs[2])), axis=2)
+
+    np.savetxt(join(args.output, 'train_' + str(args.seed) + '.csv'), 
+                    mean_folds_train, delimiter=',', fmt='%6f')
+    with open(join(args.output, 'time_train_' + str(args.seed) + '.csv'), 'w') as fp:
+        fp.write('%6f' % mean_time)
+    np.savetxt(join(args.output, 'test_' + str(args.seed) + '.csv'), 
+                    mean_folds_test, delimiter=',', fmt='%6f')
 
 if __name__ == '__main__':
     args = parse_args()
