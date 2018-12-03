@@ -23,6 +23,9 @@ class NeuralNetwork(object):
         np.random.seed(self.__seed)
 
     def build_model(self):
+        """
+        Builds a model using Keras library and saves it as a class variable for later usage
+        """
         model = Sequential()
 
         # Input Layer
@@ -48,6 +51,10 @@ class NeuralNetwork(object):
         self.__model = model
 
     def fit_model(self, X, Y, train, valid):
+        """
+        Fits the pre-created model and evaluates it using the 3-Fold Cross Validation approach
+        Returns the training accuracy for each epoch and the validation accuracy
+        """
         history = self.__model.fit(X[train], Y[train], epochs=self.__epochs,
                                     batch_size=self.__batch_size, verbose=0)
         # Keep track of the accuracy for each epoch in the training phase
@@ -55,4 +62,6 @@ class NeuralNetwork(object):
         accbyep = np.column_stack((epochs, np.array(history.history['acc'])))
         result  = self.__model.evaluate(X[valid], Y[valid], verbose=0)
         valid_err = result[1]
+
+        # Return the training accuracy for each epoch and the validation accuracy
         return accbyep, valid_err
